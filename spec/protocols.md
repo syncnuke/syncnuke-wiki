@@ -17,10 +17,10 @@ See [Networking]({{ '/spec/networking/' | relative_url }}) for transport details
 
 ## Reference behavior
 
-| Protocol | Support |
+| Protocol | Version |
 | --- | --- |
-| [DataSaver]({{ '/spec/data-saver/' | relative_url }}) | Supported by SyncNuke Core. |
-| SyncPlay | [Planned]({{ '/roadmap/' | relative_url }}#synchronization-protocols) for SyncNuke Core. |
+| [DataSaver]({{ '/spec/data-saver/' | relative_url }}) | `0.2.0` |
+| Syncplay | `1.7.7` |
 
 `SyncClientFactory` selects the synchronization implementation and checks the requested
 protocol version. The selected implementation defines how messages are exchanged and used
@@ -33,5 +33,3 @@ for how a matching server is selected.
 ## Reference material
 
 [SyncNuke Core's Protocols](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol).
-
-[Protocol overview](https://github.com/syncnuke/syncnuke-core/tree/main/README.md#supported-protocols) and [roadmap](https://github.com/syncnuke/syncnuke-core/tree/main/README.md#roadmap).

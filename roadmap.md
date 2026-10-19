@@ -10,7 +10,6 @@ The roadmap records planned work across SyncNuke. No release dates are ever assi
 
 ## Synchronization protocols
 
-- Add SyncPlay protocol support to SyncNuke Core.
 - Add cross-protocol server synchronization.
 
 ## Player integrations

@@ -23,8 +23,9 @@ The current `MediaPlayer` interface exposes these operations:
 | Observe current state | `getStatus()` |
 | Release resources | Inherited `AutoCloseable` contract |
 
-The reference state distinguishes `PLAYING` and `PAUSED`, with position in seconds,
-playback speed relative to normal speed, and an observation timestamp in milliseconds since epoch.
+The reference state distinguishes `PLAYING` and `PAUSED`, with position in seconds, duration in seconds,
+playback speed relative to normal speed, media filename and an
+observation timestamp in milliseconds since epoch.
 A load argument is a string; this does not yet specify a portable media identifier.
 
 ## Integration requirements
@@ -41,6 +42,9 @@ a command does not by itself confirm that the player has reached the requested s
 | `position` | Finite, nonnegative position in seconds. |
 | `playbackSpeed` | Finite, positive rate; `1.0` is normal playback speed. |
 | `lastUpdateTime` | Nonnegative update timestamp in milliseconds since epoch. |
+
+`PlayerState` also carries `fileName` and `duration` metadata, defaulting to null and zero
+respectively. Core does not validate these fields.
 
 The returned `PlayerState` itself MUST NOT be null. Integrations need to keep its timestamp
 consistent with the observed position, since Core uses elapsed time and playback speed to
@@ -59,13 +63,13 @@ working on SyncNuke Core.
 
 At startup, `PlayerManager` reads an initial state from the player. It then polls `getStatus()`,
 copying and validating each observation. The polling interval defaults to
-[DEFAULT_POLL_INTERVAL_MILLIS](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/player/internal/PlayerManager.java#L24)
+[DEFAULT_POLL_INTERVAL_MILLIS](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/player/internal/PlayerManager.java)
 and can be configured through `SyncManager`.
 
-Play/pause and playback speed changes notify the listener. To detect seeks, the manager
+Play/pause, playback speed, filename, and duration changes notify the listener. To detect seeks, the manager
 projects the previous position forward using elapsed time and playback speed, then compares
 it with the observed position. A difference above
-[POSITION_DRIFT_TOLERANCE_SECONDS](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/player/internal/PlayerManager.java#L25)
+[POSITION_DRIFT_TOLERANCE_SECONDS](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/player/internal/PlayerManager.java)
 also triggers a notification. Each valid observation becomes the baseline for the next poll.
 
 If a poll raises `NoMediaLoadedException`, the manager continues polling. The initial read

@@ -13,7 +13,7 @@ communication.
 
 ## Reference behavior
 
-`DataSaverClient` implements protocol `datasaver`, version `0.1.0`. It exchanges playback
+`DataSaverClient` implements protocol `datasaver`, version `0.2.0`. It exchanges playback
 state and room membership information while filtering updates that match expected progress.
 The current client uses `QuicClient` with `BaseCodec`.
 
@@ -31,29 +31,32 @@ The current client uses `QuicClient` with `BaseCodec`.
 
 ## State updates
 
-State messages carry play/pause state, position in seconds, and playback speed. They contain
+State messages carry play/pause state, position in seconds, playback speed, and an optional filename. They contain
 no timestamp; the client records its own current time when updating its expected state.
 
-The first local observation and changes between playing and paused trigger an update.
+The client waits for room information before sending state, and for the server state when
+joining other participants. The first local observation, filename changes, and changes
+between playing and paused trigger an update. Playback updates from the client are filtered
+out of local observations.
 For other observations, Core applies these filters in order:
 
-- A position difference within [MIN_PROG_CHANGE](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/DataSaverClient.java#L42)
+- A position difference within [MIN_PROG_CHANGE](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/DataSaverClient.java)
   of the stored expected state is suppressed.
 - A larger difference while paused, or with no positive elapsed time, triggers an update.
 - While playing, the client compares actual progress with elapsed time multiplied by the
   observed playback speed. It sends an update when the relative error exceeds
-  [DRIFT_THRESHOLD](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/DataSaverClient.java#L41).
+  [DRIFT_THRESHOLD](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/DataSaverClient.java).
   Expected advances that become zero after
-  [integer truncation](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/DataSaverClient.java#L216) are suppressed.
+  [integer truncation](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/DataSaverClient.java) are suppressed.
 
 A speed-only change can therefore be suppressed by the position filter. The latest expected
-state is recorded after a successful local send or before applying an incoming update.
+state is recorded before sending a local update or applying an incoming update.
 
 The default keep-alive interval is 10 seconds, defined by
-[DEFAULT_KEEP_ALIVE_INTERVAL_MILLIS](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/DataSaverClient.java#L26).
+[DEFAULT_KEEP_ALIVE_INTERVAL_MILLIS](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/DataSaverClient.java).
 At each scheduled check, if no message has
 been sent for that interval and an expected state is available, the client sends an
-`UPDATE_STATE` with its projected position.
+`UPDATE_STATE` with its projected position. When no expected state is found, a `PING` is sent instead.
 
 Using a state update as the keep-alive keeps the connection active and regularly refreshes
 synchronization information. Relying only on change-triggered messages could allow a missed
@@ -76,14 +79,14 @@ Fields follow the command byte in the order shown below.
 
 <table class="protocol-fields">
   <thead>
-    <tr><th scope="col">Command</th><th scope="col">Code</th><th scope="colgroup" colspan="3">Fields</th></tr>
+    <tr><th scope="col">Command</th><th scope="col">Code</th><th scope="colgroup" colspan="4">Fields</th></tr>
   </thead>
   <tbody>
-    <tr><th scope="row"><code>CONNECT</code></th><td><code>0x01</code></td><td colspan="2"><code>host</code><br>string</td><td><code>port</code><br>u16</td></tr>
-    <tr><th scope="row"><code>UPDATE_STATE</code></th><td><code>0x02</code></td><td><code>state</code><br>byte</td><td><code>position</code><br>f64</td><td><code>playbackSpeed</code><br>f64</td></tr>
-    <tr><th scope="row"><code>JOIN_ROOM</code></th><td><code>0x03</code></td><td><code>username</code><br>string</td><td><code>room</code><br>string</td><td><code>password</code><br>optional string</td></tr>
-    <tr><th scope="row"><code>LEAVE_ROOM</code></th><td><code>0x04</code></td><td><code>username</code><br>string</td><td><code>room</code><br>string</td><td><code>password</code><br>optional string</td></tr>
-    <tr><th scope="row"><code>PING</code></th><td><code>0x05</code></td><td colspan="3">None</td></tr>
+    <tr><th scope="row"><code>CONNECT</code></th><td><code>0x01</code></td><td colspan="2"><code>host</code><br>string</td><td colspan="2"><code>port</code><br>u16</td></tr>
+    <tr><th scope="row"><code>UPDATE_STATE</code></th><td><code>0x02</code></td><td><code>state</code><br>byte</td><td><code>position</code><br>f64</td><td><code>playbackSpeed</code><br>f64</td><td><code>fileName</code><br>optional string</td></tr>
+    <tr><th scope="row"><code>JOIN_ROOM</code></th><td><code>0x03</code></td><td><code>username</code><br>string</td><td><code>room</code><br>string</td><td colspan="2"><code>password</code><br>optional string</td></tr>
+    <tr><th scope="row"><code>LEAVE_ROOM</code></th><td><code>0x04</code></td><td><code>username</code><br>string</td><td><code>room</code><br>string</td><td colspan="2"><code>password</code><br>optional string</td></tr>
+    <tr><th scope="row"><code>PING</code></th><td><code>0x05</code></td><td colspan="4">None</td></tr>
   </tbody>
 </table>
 
@@ -103,11 +106,12 @@ Fields follow the command byte in the order shown below.
 | `PAUSED` | `0x00` |
 | `PLAYING` | `0x01` |
 
-An `UPDATE_STATE` message is exactly
-18 bytes. For example, paused at position zero with normal speed is:
+An `UPDATE_STATE` message is 19 bytes with an absent filename; a present filename adds
+a two-byte length and its UTF-8 bytes. For example, paused at position zero with normal
+speed and an absent filename is:
 
 ```text
-02 00 00 00 00 00 00 00 00 00 3f f0 00 00 00 00 00 00
+02 00 00 00 00 00 00 00 00 00 3f f0 00 00 00 00 00 00 00
 ```
 
 Incoming room messages consume the optional password field but discard its value.
@@ -121,8 +125,6 @@ protocol's `ConnectData`, which also carries the synchronization protocol and ve
 ## Reference material
 
 SyncNuke Core's [DataSaver command model (internal)](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/data/Command.java).
-
-[DataSaver overview](https://github.com/syncnuke/syncnuke-core/tree/main/README.md#datasaver).
 
 [DataSaverClient](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/DataSaverClient.java) and
 [BaseCodec](https://github.com/syncnuke/syncnuke-core/tree/main/src/main/java/io/github/syncnuke/client/internal/protocol/datasaver/data/BaseCodec.java)
