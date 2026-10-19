@@ -14,14 +14,14 @@ The builds below are pre-releases and are still in development.
 SyncNuke Desktop connects your local media player to a SyncNuke session.
 The current player integration supports mpv.
 
-[Download SyncNuke Desktop 0.2.1 (ZIP)](https://github.com/if-shouldrs/syncnuke-desktop/releases/download/0.2.1/syncnuke-desktop-0.2.1.zip){: .project-button }
+[Download SyncNuke Desktop 0.2.2 (ZIP)](https://github.com/if-shouldrs/syncnuke-desktop/releases/download/0.2.2/syncnuke-desktop-0.2.2.zip){: .project-button }
 
 Extract the archive and launch with `start.sh` or `start.bat`.
 See the setup instructions for requirements and configuration.
 
 [Requirements](https://github.com/if-shouldrs/syncnuke-desktop/tree/main/README.md#requirements)
 · [Setup and usage](https://github.com/if-shouldrs/syncnuke-desktop/tree/main/README.md#usage)
-· [Release notes](https://github.com/if-shouldrs/syncnuke-desktop/releases/tag/0.2.0)
+· [Release notes](https://github.com/if-shouldrs/syncnuke-desktop/releases/tag/0.2.2)
 · [All releases](https://github.com/if-shouldrs/syncnuke-desktop/releases)
 · [Source](https://github.com/if-shouldrs/syncnuke-desktop/tree/main)
 
@@ -29,13 +29,13 @@ See the setup instructions for requirements and configuration.
 
 SyncNuke Android adds SyncNuke support to VLC.
 
-[Download SyncNuke Android 0.3.0 (APK)](https://github.com/if-shouldrs/syncnuke-android/releases/download/0.3.0/SyncNuke-Android-0.3.0-arm64-v8a.apk){: .project-button }
+[Download SyncNuke Android 0.3.1 (APK)](https://github.com/if-shouldrs/syncnuke-android/releases/download/0.3.1/SyncNuke-Android-0.3.1-arm64-v8a.apk){: .project-button }
 
 Settings can be found under "Casting" in the main application settings, or "Control settings" during playback. 
 
 Enable synchronization & update your room configuration as needed.
 
-[Release notes](https://github.com/if-shouldrs/syncnuke-android/releases/tag/0.3.0)
+[Release notes](https://github.com/if-shouldrs/syncnuke-android/releases/tag/0.3.1)
 · [All releases](https://github.com/if-shouldrs/syncnuke-android/releases)
 · [Source](https://github.com/if-shouldrs/syncnuke-android/tree/main)
 
